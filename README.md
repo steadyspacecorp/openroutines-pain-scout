@@ -86,7 +86,7 @@ Reddit is optional and disabled until you configure API access below.
 
 ## Getting started
 
-You need the [OpenRoutines CLI](https://openroutines.dev/docs/getting-started/), Docker, a [TypeSafe API key](https://typesafe.ai), and a model-provider API key for the investigation and reporting routines.
+You need the [OpenRoutines CLI](https://openroutines.dev/docs/getting-started/), Docker, a [TypeSafe API key](https://typesafe.ai) for Jev screening, and an [OpenRouter API key](https://openrouter.ai/keys) for the general model that runs the routines.
 
 ### 1. Try Jev without deploying anything
 
@@ -111,7 +111,7 @@ openroutines configure
 openroutines credentials set typesafe_api_key
 ```
 
-Configuration sets your owner details, timezone, and general model. Add that model's provider credential as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and subreddit list. Keep the generated master key safe. API keys belong in the encrypted credential store.
+Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening always uses your TypeSafe key, because the scout needs Jev's scored answers from TypeSafe's own API. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and subreddit list. Keep the generated master key safe. API keys belong in the encrypted credential store.
 
 ### 3. Add your subreddits (optional)
 

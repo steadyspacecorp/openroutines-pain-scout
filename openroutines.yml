@@ -9,7 +9,7 @@ instructions: >-
   Support findings with source evidence and distinguish unknowns from facts.
   Deliver findings only to the configured owner destinations; never contact prospects.
 defaults:
-  model: "{{DEFAULT_MODEL}}"
+  model: openrouter/anthropic/claude-sonnet-5
   timeout: 15m
 max_timeout: 30m
 concurrency: 1
