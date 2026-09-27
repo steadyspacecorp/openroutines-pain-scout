@@ -110,7 +110,7 @@ Copy this template into your own Git repository, then run:
 openroutines configure
 ```
 
-Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in place of `openrouter_api_key` in the scan routine. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and subreddit list. Keep the generated master key safe. API keys belong in the encrypted credential store.
+Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in the scan routine. With an OpenRouter model, OpenRoutines injects the OpenRouter key into every run, so the scan routine needs no grant for it. If you choose a model from another provider, grant `openrouter_api_key` in the scan routine so Jev screening can still use it. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and subreddit list. Keep the generated master key safe. API keys belong in the encrypted credential store.
 
 ### 3. Add your subreddits (optional)
 
@@ -141,7 +141,7 @@ openroutines credentials set reddit_client_secret
 In [routines/scan.md](routines/scan.md), set:
 
 ```yaml
-credentials: [openrouter_api_key, reddit_client_id, reddit_client_secret]
+credentials: [reddit_client_id, reddit_client_secret]
 ```
 
 The scout obtains a fresh access token each run and stops Reddit requests when its rate allowance is exhausted.
