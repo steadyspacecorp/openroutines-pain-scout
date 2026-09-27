@@ -17,6 +17,7 @@ knowledge:
   retention: 30d
 variables:
   jev_model: jev-latest
+  jev_base_url: https://openrouter.ai/api
   investigate_threshold: "0.8"
   max_investigations: "5"
   delivery: preview

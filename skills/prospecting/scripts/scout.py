@@ -132,7 +132,8 @@ def explain(answers, threshold):
 def screen(batch, brief, threshold, fetch=request, questions=None):
     if not 0 < threshold <= 1:
         raise ValueError("threshold must be in (0, 1]")
-    token = os.environ["TYPESAFE_API_KEY"]
+    token = os.environ.get("OPENROUTER_API_KEY") or os.environ["TYPESAFE_API_KEY"]
+    endpoint = os.environ.get("JEV_BASE_URL", "https://openrouter.ai/api").rstrip("/") + "/v1/systemone"
     questions = QUESTIONS if questions is None else questions
     context = {
         "model": os.environ.get("JEV_MODEL", "jev-latest"),
@@ -145,7 +146,7 @@ def screen(batch, brief, threshold, fetch=request, questions=None):
     for observation in batch["observations"]:
         entry = {"observation": observation}
         try:
-            result = fetch("https://api.typesafe.ai/v1/systemone", payload(context, observation), token)
+            result = fetch(endpoint, payload(context, observation), token)
             entry["response"] = result
             decision, reasons = explain(result["answers"], threshold)
             entry.update(route=decision, reasons=reasons, answers=result["answers"],

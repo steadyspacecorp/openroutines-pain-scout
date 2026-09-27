@@ -9,7 +9,7 @@ from test_pipeline import scout
 
 
 class AuditTests(unittest.TestCase):
-    @patch.dict(os.environ, {'TYPESAFE_API_KEY': 'not-in-audit', 'OPENROUTINES_RUN_ID': 'run-test'})
+    @patch.dict(os.environ, {'OPENROUTER_API_KEY': 'not-in-audit', 'OPENROUTINES_RUN_ID': 'run-test'})
     def audit(self):
         observation = {'id': 'reddit:t3_abc', 'title': 'Backup | issue', 'text': 'My backup stopped.', 'url': 'https://www.reddit.com/comments/abc/'}
         self.sent = []
@@ -49,7 +49,7 @@ class AuditTests(unittest.TestCase):
 
     def test_question_edits_reach_request(self):
         prompts = dict(scout.QUESTIONS, fit='Does the post describe a missing completion signal?')
-        with patch.dict(os.environ, {'TYPESAFE_API_KEY': 'test'}):
+        with patch.dict(os.environ, {'OPENROUTER_API_KEY': 'test'}):
             def fetch(url, payload, token):
                 self.assertTrue(payload['questions']['fit']['instructions'].startswith(prompts['fit']))
                 return {'answers': {}}

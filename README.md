@@ -41,7 +41,7 @@ OpenRoutines runs the schedule and carries the scout's knowledge between runs, i
 
 ### What Jev sees
 
-For each collected post, the script sends TypeSafe's API your complete customer brief, the post's title and text, its available source metadata, and four questions from [questions.json](skills/prospecting/questions.json):
+For each collected post, the script sends Jev, through OpenRouter, your complete customer brief, the post's title and text, its available source metadata, and four questions from [questions.json](skills/prospecting/questions.json):
 
 | Dimension | Question |
 | --- | --- |
@@ -86,21 +86,21 @@ Reddit is optional and disabled until you configure API access below.
 
 ## Getting started
 
-You need the [OpenRoutines CLI](https://openroutines.dev/docs/getting-started/), Docker, a [TypeSafe API key](https://typesafe.ai) for Jev screening, and an [OpenRouter API key](https://openrouter.ai/keys) for the general model that runs the routines.
+You need the [OpenRoutines CLI](https://openroutines.dev/docs/getting-started/), Docker, and an [OpenRouter API key](https://openrouter.ai/keys). The one key covers both Jev screening and the general model that runs the routines.
 
 ### 1. Try Jev without deploying anything
 
 The repository includes [four sample conversations](examples/observations.json): a missed backup, a manual import check, a website-uptime request, and a promotional post. Run them through the real Jev API from the repository root:
 
 ```sh
-read -rs TYPESAFE_API_KEY
-export TYPESAFE_API_KEY
+read -rs OPENROUTER_API_KEY
+export OPENROUTER_API_KEY
 python3 skills/prospecting/scripts/scout.py screen examples/observations.json > /tmp/pain-scores.json
-unset TYPESAFE_API_KEY
+unset OPENROUTER_API_KEY
 python3 skills/prospecting/scripts/scout.py review /tmp/pain-scores.json
 ```
 
-Paste your TypeSafe key at the hidden prompt and press Enter. This makes four billable API calls, saves the complete results, and prints a table of scores and investigate/drop decisions. It sends no digest. The first two examples are intended matches and the other two are intended exclusions. Actual decisions come from Jev, so disagreement is useful feedback about the brief or the questions.
+Paste your OpenRouter key at the hidden prompt and press Enter. This makes four billable API calls, saves the complete results, and prints a table of scores and investigate/drop decisions. It sends no digest. The first two examples are intended matches and the other two are intended exclusions. Actual decisions come from Jev, so disagreement is useful feedback about the brief or the questions.
 
 ### 2. Make the agent yours
 
@@ -108,10 +108,9 @@ Copy this template into your own Git repository, then run:
 
 ```sh
 openroutines configure
-openroutines credentials set typesafe_api_key
 ```
 
-Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening always uses your TypeSafe key, because the scout needs Jev's scored answers from TypeSafe's own API. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and subreddit list. Keep the generated master key safe. API keys belong in the encrypted credential store.
+Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in place of `openrouter_api_key` in the scan routine. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and subreddit list. Keep the generated master key safe. API keys belong in the encrypted credential store.
 
 ### 3. Add your subreddits (optional)
 
@@ -142,7 +141,7 @@ openroutines credentials set reddit_client_secret
 In [routines/scan.md](routines/scan.md), set:
 
 ```yaml
-credentials: [typesafe_api_key, reddit_client_id, reddit_client_secret]
+credentials: [openrouter_api_key, reddit_client_id, reddit_client_secret]
 ```
 
 The scout obtains a fresh access token each run and stops Reddit requests when its rate allowance is exhausted.

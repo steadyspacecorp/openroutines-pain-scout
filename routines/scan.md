@@ -1,7 +1,7 @@
 ---
 schedule: "0 */6 * * *"
 skills: [prospecting]
-credentials: [typesafe_api_key]
+credentials: [openrouter_api_key]
 timeout: 15m
 ---
 

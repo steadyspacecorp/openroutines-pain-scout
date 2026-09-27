@@ -46,7 +46,7 @@ class ScreeningTests(unittest.TestCase):
         self.assertEqual(result["coverage"]["deferred_by_cap"], 1)
         self.assertEqual(len(result["coverage"]["truncated_queries"]), 2)
 
-    @patch.dict(os.environ, {"TYPESAFE_API_KEY": "test"})
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test"})
     def test_failed_screen_is_retryable(self):
         result = scout.screen({"observations": [{"id": "1"}], "coverage": {}}, "brief", 0.8,
                               lambda *args: {"answers": {}})
