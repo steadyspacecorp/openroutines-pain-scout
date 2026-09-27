@@ -2,13 +2,22 @@
 
 Find people describing the problem your product solves.
 
-Pain Scout is an [OpenRoutines](https://openroutines.dev) agent that finds relevant conversations on Hacker News and Stack Exchange sites such as Server Fault. Give it a customer brief, deploy it, and each morning it delivers a digest of conversations worth joining.
+Pain Scout is an [OpenRoutines](https://openroutines.dev) agent built around [Jev](https://typesafe.ai), TypeSafe's structured decision model. Every six hours it collects conversations from Hacker News and Stack Exchange, and Jev scores each one against your customer brief for a fraction of a cent. The few that pass get a closer look from a general model, and each morning you get a digest of conversations worth joining.
 
 ## Why it matters
 
 Somewhere today, someone is asking for a recommendation, explaining a workaround, or describing the exact problem you built your product to solve. Finding those conversations by hand or by keyword means reading a lot of noise for a little signal.
 
-Pain Scout reads the noise for you. It checks conversations against your brief and brings you only the ones worth your time, with the source, why they fit, and a useful way to jump in.
+Keyword search can't tell a developer whose backups silently stopped from a news story about an airport's backup systems. A general model can, but reading every search result with one gets expensive fast. Jev sits in between. It answers four yes-or-no questions about each post and returns a probability for each one. That makes it cheap enough to screen everything a loose search returns, so the scout spends real model time only on what qualifies.
+
+A test run of the included example brief looked like this:
+
+| Step | Items | Reported cost |
+| --- | --- | --- |
+| Jev screening | 102 posts screened, 1 qualified | about $0.005 |
+| Investigation with Claude Sonnet 5 | 1 post | about $0.19 |
+
+Your costs depend on how much your searches return and which models you choose. Each digest reports the Jev cost it recorded.
 
 An example finding, using the included brief for a scheduled-job monitoring product:
 
@@ -32,7 +41,7 @@ Every screening decision is inspectable, including the posts that did not qualif
 
 The agent runs 4 routines in sequence:
 
-1. **Scan** (every six hours) searches Hacker News and new questions on your Stack Exchange sites. It looks back seven days and screens up to 100 unseen items across both sources per scan. [TypeSafe's Jev](https://typesafe.ai) reads each item alongside your brief and checks for firsthand experience, product fit, exclusions, and requests for help. Qualifying matches are queued for investigation.
+1. **Scan** (every six hours) searches Hacker News and new questions on your Stack Exchange sites. It looks back seven days and screens up to 100 unseen items across both sources per scan. Jev reads each item alongside your brief and checks for firsthand experience, product fit, exclusions, and requests for help. Qualifying matches are queued for investigation. The scan only runs scripts and updates its records, so it uses a smaller, cheaper model, Claude Haiku 4.5.
 2. **Investigate** (every six hours, after each scan) uses a general model to open each queued conversation, check the context, and prepare the finding. Jev's cheap screening keeps this deeper research focused on promising conversations.
 3. **Digest** (08:00 in your timezone) composes the morning digest from new findings and saves it, so a failed delivery can be retried.
 4. **Deliver** (08:10) sends the saved digest to your configured destinations.
@@ -73,7 +82,7 @@ The included brief scouts for Tallyping, a fictional scheduled-job monitoring se
 
 Choose your sources in [sources.json](skills/prospecting/sources.json):
 
-- **Hacker News:** search posts and comments using phrases your customers use to describe their problems.
+- **Hacker News:** search posts and comments using phrases your customers use to describe their problems. Keep the phrases loose. Jev does the filtering, so noisy results cost little.
 - **Stack Exchange:** search new questions on the sites you list, such as `serverfault`, `devops`, or `stackoverflow`. Every question is someone describing a problem, so the signal is high, but volume on many sites is now low. The search matches every word of a query in the title or body, so keep its queries short and separate from the Hacker News phrases. Answers and comments are not collected.
 
 The included sites are `serverfault`, `devops`, and `stackoverflow`, a starting point for the scheduled-job monitoring example.
@@ -110,7 +119,7 @@ Copy this template into your own Git repository, then run:
 openroutines configure
 ```
 
-Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in the scan routine. With an OpenRouter model, OpenRoutines injects the OpenRouter key into every run, so the scan routine needs no grant for it. If you choose a model from another provider, grant `openrouter_api_key` in the scan routine so Jev screening can still use it. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and Stack Exchange sites. Keep the generated master key safe. API keys belong in the encrypted credential store.
+Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). The scan routine sets its own model, Claude Haiku 4.5 through OpenRouter, in [routines/scan.md](routines/scan.md). If you switch providers, change that line too. Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in the scan routine. With an OpenRouter model, OpenRoutines injects the OpenRouter key into every run, so the scan routine needs no grant for it. If you choose a model from another provider, grant `openrouter_api_key` in the scan routine so Jev screening can still use it. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and Stack Exchange sites. Keep the generated master key safe. API keys belong in the encrypted credential store.
 
 ### 3. Pick where the digest lands
 

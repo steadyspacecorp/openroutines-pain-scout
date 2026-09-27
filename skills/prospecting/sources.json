@@ -1,10 +1,15 @@
 {
   "queries": [
     "cron monitoring",
+    "cron job failed",
+    "cron alert",
     "backup failed",
-    "scheduled job",
+    "backups stopped",
     "check backups",
-    "cron alert"
+    "scheduled job",
+    "heartbeat monitoring",
+    "dead man's switch",
+    "job stopped running"
   ],
   "lookback_hours": 168,
   "pages_per_query": 2,

@@ -154,11 +154,14 @@ def screen(batch, brief, threshold, fetch=request, questions=None):
         except (HTTPError, URLError, TimeoutError, KeyError, ValueError, TypeError):
             entry.update(route="retry", reasons=["API call or answer validation failed"], error="screening failed")
         results.append(entry)
+    costs = [entry["usage"].get("cost") for entry in results if isinstance(entry.get("usage"), dict)]
+    usage_total = {"calls": len(results), "answered": len(costs),
+                   "cost_usd": round(sum(c for c in costs if isinstance(c, (int, float))), 6)}
     return {"schema_version": 1, "screened_at": datetime.now(timezone.utc).isoformat(),
             "run_id": os.environ.get("OPENROUTINES_RUN_ID"),
             "request_context": context, "policy": {"investigate_threshold": threshold,
             "exclude_at_or_above": 0.5, "seeking_affects_route": False},
-            "coverage": batch["coverage"], "results": results}
+            "coverage": batch["coverage"], "usage_total": usage_total, "results": results}
 
 
 def payload(context, observation):
@@ -188,6 +191,8 @@ def review(audit, threshold=None):
         raise ValueError("threshold must be in (0, 1]")
     lines = [f"## Screening {audit['screened_at']}", "",
              f"Cutoff: {cutoff:g}. Original: {original:g}. Exclude at 0.5. Seeking is informational.", "",
+             *([f"Jev calls: {audit['usage_total']['calls']}. Reported cost: ${audit['usage_total']['cost_usd']:.4f}.", ""]
+               if "usage_total" in audit else []),
              "Reasons below explain the routing rule, not Jev's internal reasoning.", "",
              "| Post | Original | Reviewed | Firsthand | Fit | Excluded | Seeking | Reason |",
              "| --- | --- | --- | --- | --- | --- | --- | --- |"]

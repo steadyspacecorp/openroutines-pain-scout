@@ -47,6 +47,17 @@ class AuditTests(unittest.TestCase):
             self.assertIn('Seen IDs: abc', first)
             self.assertEqual(scout.read_audits(path), [audit])
 
+    def test_usage_total_sums_reported_cost(self):
+        answers = {k: {'type': 'noul', 'noul': 0.1} for k in ('firsthand', 'fit', 'excluded', 'seeking')}
+        responses = iter([{'answers': answers, 'model': 'jev', 'usage': {'cost': 0.00005}},
+                          {'answers': answers, 'model': 'jev', 'usage': {'cost': 0.00007}},
+                          {'answers': {}}])
+        with patch.dict(os.environ, {'OPENROUTER_API_KEY': 'test'}):
+            audit = scout.screen({'observations': [{'id': 'a'}, {'id': 'b'}, {'id': 'c'}], 'coverage': {}},
+                                 'brief', 0.8, lambda *args: next(responses))
+        self.assertEqual(audit['usage_total'], {'calls': 3, 'answered': 2, 'cost_usd': 0.00012})
+        self.assertIn('Jev calls: 3. Reported cost: $0.0001.', scout.review(audit))
+
     def test_question_edits_reach_request(self):
         prompts = dict(scout.QUESTIONS, fit='Does the post describe a missing completion signal?')
         with patch.dict(os.environ, {'OPENROUTER_API_KEY': 'test'}):

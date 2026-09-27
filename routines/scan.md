@@ -2,6 +2,7 @@
 schedule: "0 */6 * * *"
 skills: [prospecting]
 credentials: []
+model: openrouter/anthropic/claude-haiku-4.5
 timeout: 15m
 ---
 
@@ -13,4 +14,5 @@ Persist successful screening IDs and actual coverage in your ledger.
 Use the screening helper's --audit-ledger option to preserve every screened item, including rejections, with its scores and original request context.
 Do not replace or summarize away the generated audit blocks when updating the ledger.
 Record coverage and failures as events so the digest can distinguish a quiet day from broken collection.
+Record the screening's `usage_total` as an event: Jev calls made and the reported cost in USD.
 If a source or Jev fails, record the failure and leave unprocessed items eligible for a later scan.

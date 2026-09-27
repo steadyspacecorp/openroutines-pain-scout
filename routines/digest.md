@@ -9,6 +9,7 @@ timeout: 10m
 Use the delivery skill to prepare the daily digest from changes.md.
 Include up to five new verified findings, strongest first, with links, evidence, fit, unknowns, and a useful next step.
 Include actual coverage and any source or screening failures; never invent activity counts or cost savings.
+In coverage, report how many items Jev screened, how many qualified, and the Jev cost recorded in scan events; omit the cost if no event recorded it.
 On a quiet day prepare a short coverage-only digest so the owner can see that the scout is running.
 Retain any excess findings in your ledger for the next digest before consuming changes.
 Use the delivery helper's prepare command and record the exact JSON envelope in a new Agent-owned delivery task.
