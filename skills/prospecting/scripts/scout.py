@@ -15,6 +15,7 @@ from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from reddit_source import collect_reddit
+from stackexchange_source import collect_stackexchange
 
 ROOT = Path(__file__).resolve().parents[1]
 QUESTIONS = json.loads((ROOT / "questions.json").read_text())
@@ -79,22 +80,24 @@ def collect_hn(config, seen, fetch=request, now=None):
 
 
 
-def collect(config, seen, fetch=request, now=None, reddit_fetch=None):
+def collect(config, seen, fetch=request, now=None, reddit_fetch=None, stackexchange_fetch=None):
     now = time.time() if now is None else now
     hn = collect_hn(config, seen, fetch, now)
-    reddit = collect_reddit(config.get("reddit", {}), seen,
-                            int(now - config["lookback_hours"] * 3600), reddit_fetch)
-    # Alternate sources so a busy HN scan cannot consume the entire screening budget.
-    groups = [hn["observations"], reddit["observations"]]
+    cutoff = int(now - config["lookback_hours"] * 3600)
+    reddit = collect_reddit(config.get("reddit", {}), seen, cutoff, reddit_fetch)
+    stackexchange = collect_stackexchange(config.get("stackexchange", {}), seen, cutoff, stackexchange_fetch)
+    # Alternate sources so one busy source cannot consume the entire screening budget.
+    groups = [hn["observations"], reddit["observations"], stackexchange["observations"]]
     mixed = []
     for index in range(max(map(len, groups), default=0)):
         for group in groups:
             if index < len(group):
                 mixed.append(group[index])
     coverage = dict(hn["coverage"])
-    coverage["sources"] = {"hacker_news": hn["coverage"], "reddit": reddit["coverage"]}
-    coverage["errors"] = hn["coverage"]["errors"] + reddit["coverage"]["errors"]
-    coverage["unique_unseen"] += reddit["coverage"]["unique_unseen"]
+    coverage["sources"] = {"hacker_news": hn["coverage"], "reddit": reddit["coverage"],
+                           "stackexchange": stackexchange["coverage"]}
+    coverage["errors"] = hn["coverage"]["errors"] + reddit["coverage"]["errors"] + stackexchange["coverage"]["errors"]
+    coverage["unique_unseen"] += reddit["coverage"]["unique_unseen"] + stackexchange["coverage"]["unique_unseen"]
     coverage["deferred_by_cap"] = max(0, coverage["unique_unseen"] - config["max_items"])
     return {"observations": mixed[:config["max_items"]], "coverage": coverage}
 

@@ -2,7 +2,7 @@
 
 Find people describing the problem your product solves.
 
-Pain Scout is an [OpenRoutines](https://openroutines.dev) agent that finds relevant conversations on Hacker News and in the subreddits you choose. Give it a customer brief, deploy it, and each morning it delivers a digest of conversations worth joining.
+Pain Scout is an [OpenRoutines](https://openroutines.dev) agent that finds relevant conversations on Hacker News, Stack Exchange sites such as Server Fault, and the subreddits you choose. Give it a customer brief, deploy it, and each morning it delivers a digest of conversations worth joining.
 
 ## Why it matters
 
@@ -32,7 +32,7 @@ Every screening decision is inspectable, including the posts that did not qualif
 
 The agent runs 4 routines in sequence:
 
-1. **Scan** (every six hours) searches Hacker News and new posts in your selected subreddits. It looks back seven days and screens up to 100 unseen items across both sources per scan. [TypeSafe's Jev](https://typesafe.ai) reads each item alongside your brief and checks for firsthand experience, product fit, exclusions, and requests for help. Qualifying matches are queued for investigation.
+1. **Scan** (every six hours) searches Hacker News, new questions on your Stack Exchange sites, and new posts in your selected subreddits. It looks back seven days and screens up to 100 unseen items across all sources per scan. [TypeSafe's Jev](https://typesafe.ai) reads each item alongside your brief and checks for firsthand experience, product fit, exclusions, and requests for help. Qualifying matches are queued for investigation.
 2. **Investigate** (every six hours, after each scan) uses a general model to open each queued conversation, check the context, and prepare the finding. Jev's cheap screening keeps this deeper research focused on promising conversations.
 3. **Digest** (08:00 in your timezone) composes the morning digest from new findings and saves it, so a failed delivery can be retried.
 4. **Deliver** (08:10) sends the saved digest to your configured destinations.
@@ -74,14 +74,17 @@ The included brief scouts for Tallyping, a fictional scheduled-job monitoring se
 Choose your sources in [sources.json](skills/prospecting/sources.json):
 
 - **Hacker News:** search posts and comments using phrases your customers use to describe their problems.
+- **Stack Exchange:** search new questions on the sites you list, such as `serverfault`, `devops`, or `stackoverflow`. Every question is someone describing a problem, so the signal is high, but volume on many sites is now low. The search matches every word of a query in the title or body, so keep its queries short and separate from the Hacker News phrases. Answers and comments are not collected.
 - **Reddit:** watch new post titles and bodies in specific subreddits. Jev checks relevance without requiring a keyword match. Reddit comments are not collected yet.
 
 The included subreddit list is `selfhosted`, `sysadmin`, and `devops`, a starting point for the scheduled-job monitoring example.
 Replace these with communities where your customers talk about their work.
-Use either source or both; set `queries` to `[]` for Reddit only.
+Use any combination of sources. Set `queries` to `[]` to skip Hacker News, or set `enabled` to `false` in a source's section to turn it off.
 GitHub Discussions is a delivery destination, not a collection source.
 
-Hacker News works without a source credential.
+Hacker News and Stack Exchange work without a source credential.
+Stack Exchange allows 300 requests a day per IP address without a key. The default settings use 9 requests per scan. For more quota, [register an app](https://stackapps.com/apps/oauth/register) and put its key in `stackexchange_key` in `openroutines.yml`. Stack Exchange documents the key as not secret, so it's a variable rather than a credential.
+Stack Exchange content is licensed CC BY-SA, and every finding links to its source.
 Reddit is optional and disabled until you configure API access below.
 
 ## Getting started
