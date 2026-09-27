@@ -11,7 +11,7 @@ from test_pipeline import scout
 class AuditTests(unittest.TestCase):
     @patch.dict(os.environ, {'OPENROUTER_API_KEY': 'not-in-audit', 'OPENROUTINES_RUN_ID': 'run-test'})
     def audit(self):
-        observation = {'id': 'reddit:t3_abc', 'title': 'Backup | issue', 'text': 'My backup stopped.', 'url': 'https://www.reddit.com/comments/abc/'}
+        observation = {'id': 'stackexchange:serverfault:123', 'title': 'Backup | issue', 'text': 'My backup stopped.', 'url': 'https://serverfault.com/questions/123/'}
         self.sent = []
         def fetch(url, payload, token):
             self.sent.append(copy.deepcopy(payload))

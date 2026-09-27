@@ -2,7 +2,7 @@
 
 Find people describing the problem your product solves.
 
-Pain Scout is an [OpenRoutines](https://openroutines.dev) agent that finds relevant conversations on Hacker News, Stack Exchange sites such as Server Fault, and the subreddits you choose. Give it a customer brief, deploy it, and each morning it delivers a digest of conversations worth joining.
+Pain Scout is an [OpenRoutines](https://openroutines.dev) agent that finds relevant conversations on Hacker News and Stack Exchange sites such as Server Fault. Give it a customer brief, deploy it, and each morning it delivers a digest of conversations worth joining.
 
 ## Why it matters
 
@@ -32,7 +32,7 @@ Every screening decision is inspectable, including the posts that did not qualif
 
 The agent runs 4 routines in sequence:
 
-1. **Scan** (every six hours) searches Hacker News, new questions on your Stack Exchange sites, and new posts in your selected subreddits. It looks back seven days and screens up to 100 unseen items across all sources per scan. [TypeSafe's Jev](https://typesafe.ai) reads each item alongside your brief and checks for firsthand experience, product fit, exclusions, and requests for help. Qualifying matches are queued for investigation.
+1. **Scan** (every six hours) searches Hacker News and new questions on your Stack Exchange sites. It looks back seven days and screens up to 100 unseen items across both sources per scan. [TypeSafe's Jev](https://typesafe.ai) reads each item alongside your brief and checks for firsthand experience, product fit, exclusions, and requests for help. Qualifying matches are queued for investigation.
 2. **Investigate** (every six hours, after each scan) uses a general model to open each queued conversation, check the context, and prepare the finding. Jev's cheap screening keeps this deeper research focused on promising conversations.
 3. **Digest** (08:00 in your timezone) composes the morning digest from new findings and saves it, so a failed delivery can be retried.
 4. **Deliver** (08:10) sends the saved digest to your configured destinations.
@@ -75,17 +75,14 @@ Choose your sources in [sources.json](skills/prospecting/sources.json):
 
 - **Hacker News:** search posts and comments using phrases your customers use to describe their problems.
 - **Stack Exchange:** search new questions on the sites you list, such as `serverfault`, `devops`, or `stackoverflow`. Every question is someone describing a problem, so the signal is high, but volume on many sites is now low. The search matches every word of a query in the title or body, so keep its queries short and separate from the Hacker News phrases. Answers and comments are not collected.
-- **Reddit:** watch new post titles and bodies in specific subreddits. Jev checks relevance without requiring a keyword match. Reddit comments are not collected yet.
 
-The included subreddit list is `selfhosted`, `sysadmin`, and `devops`, a starting point for the scheduled-job monitoring example.
-Replace these with communities where your customers talk about their work.
-Use any combination of sources. Set `queries` to `[]` to skip Hacker News, or set `enabled` to `false` in a source's section to turn it off.
+The included sites are `serverfault`, `devops`, and `stackoverflow`, a starting point for the scheduled-job monitoring example.
+Replace them with sites where your customers ask questions. Use either source or both. Set `queries` to `[]` to skip Hacker News, or set `enabled` to `false` in the `stackexchange` section to skip Stack Exchange.
 GitHub Discussions is a delivery destination, not a collection source.
 
-Hacker News and Stack Exchange work without a source credential.
+Neither source needs a credential.
 Stack Exchange allows 300 requests a day per IP address without a key. The default settings use 9 requests per scan. For more quota, [register an app](https://stackapps.com/apps/oauth/register) and put its key in `stackexchange_key` in `openroutines.yml`. Stack Exchange documents the key as not secret, so it's a variable rather than a credential.
 Stack Exchange content is licensed CC BY-SA, and every finding links to its source.
-Reddit is optional and disabled until you configure API access below.
 
 ## Getting started
 
@@ -113,45 +110,9 @@ Copy this template into your own Git repository, then run:
 openroutines configure
 ```
 
-Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in the scan routine. With an OpenRouter model, OpenRoutines injects the OpenRouter key into every run, so the scan routine needs no grant for it. If you choose a model from another provider, grant `openrouter_api_key` in the scan routine so Jev screening can still use it. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and subreddit list. Keep the generated master key safe. API keys belong in the encrypted credential store.
+Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in the scan routine. With an OpenRouter model, OpenRoutines injects the OpenRouter key into every run, so the scan routine needs no grant for it. If you choose a model from another provider, grant `openrouter_api_key` in the scan routine so Jev screening can still use it. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and Stack Exchange sites. Keep the generated master key safe. API keys belong in the encrypted credential store.
 
-### 3. Add your subreddits (optional)
-
-Edit the `reddit` section of [sources.json](skills/prospecting/sources.json):
-
-```json
-"reddit": {
-  "enabled": true,
-  "subreddits": ["selfhosted", "sysadmin", "devops"],
-  "posts_per_page": 25,
-  "pages_per_subreddit": 2,
-  "user_agent": "script:openroutines-pain-scout:v0.1 (by /u/YOUR_USERNAME)"
-}
-```
-
-Use bare subreddit names, without `r/`, and replace `YOUR_USERNAME` with your Reddit username.
-These settings fetch at most 50 recent posts per community before deduplication and the combined screening cap.
-Busy communities may exceed that window; the digest reports collection limits and access failures.
-
-Reddit requires [approval for commercial API use](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy), including the processing and delivery you intend.
-Once approved, configure a confidential OAuth app supporting [application-only access](https://github.com/reddit-archive/reddit/wiki/OAuth2#application-only-oauth) and store its credentials:
-
-```sh
-openroutines credentials set reddit_client_id
-openroutines credentials set reddit_client_secret
-```
-
-In [routines/scan.md](routines/scan.md), set:
-
-```yaml
-credentials: [reddit_client_id, reddit_client_secret]
-```
-
-The scout obtains a fresh access token each run and stops Reddit requests when its rate allowance is exhausted.
-It reads posts and prepares findings for you; it never posts replies or sends Reddit messages.
-You can keep using Hacker News while arranging Reddit access.
-
-### 4. Pick where the digest lands
+### 3. Pick where the digest lands
 
 **GitHub Discussions** gives you a browsable history of findings. Enable Discussions in your chosen repository (it can be private), then set these entries under `variables` in `openroutines.yml`:
 
@@ -187,7 +148,7 @@ In `routines/deliver.md`, set `credentials: [resend_api_key]`.
 
 Leave `delivery: preview` to inspect the digest before enabling sending.
 
-### 5. Run it once, then deploy
+### 4. Run it once, then deploy
 
 To try the full workflow locally, run these in order:
 
@@ -240,7 +201,7 @@ The reasons describe the routing rule; Jev supplies scores, not a written explan
 To see the exact JSON request for one post, copy its ID from the audit:
 
 ```sh
-python3 skills/prospecting/scripts/scout.py request knowledge/ledgers/scan.md --id reddit:t3_abc123
+python3 skills/prospecting/scripts/scout.py request knowledge/ledgers/scan.md --id stackexchange:serverfault:123456
 ```
 
 Tune three separate inputs:
@@ -256,11 +217,11 @@ Previously screened live posts remain deduplicated; changing the brief does not 
 
 ## Tuning
 
-Start with a few searches and a small subreddit list, then read the first results.
+Start with a few searches and a short site list, then read the first results.
 
 - If the scout finds the wrong audience, sharpen the brief's exclusions.
-- If it misses relevant conversations, broaden the Hacker News search phrases or choose more relevant subreddits in `sources.json`.
-- If Reddit coverage is truncated, increase `pages_per_subreddit` within your API allowance or narrow the community list.
+- If it misses relevant conversations, broaden the search phrases or choose more relevant Stack Exchange sites in `sources.json`.
+- If Stack Exchange searches are truncated, increase `pages_per_query` within your daily quota.
 - Adjust `investigate_threshold` in `openroutines.yml` to change how selective screening is. The default is a starting point to evaluate against your own results.
 
 <details>

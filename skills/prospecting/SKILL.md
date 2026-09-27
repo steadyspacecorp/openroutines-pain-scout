@@ -1,6 +1,6 @@
 ---
 name: prospecting
-description: Collect Hacker News conversations, Stack Exchange questions, and optionally new posts from configured subreddits and screen them against an editable customer brief with Jev.
+description: Collect Hacker News conversations and Stack Exchange questions and screen them against an editable customer brief with Jev.
 ---
 
 Read `brief.md` beside this skill before judging fit.
@@ -33,10 +33,8 @@ Qualify the problem, product fit, and an actually useful next step.
 State missing evidence; do not infer company size, budget, or buying authority from a username.
 Preserve source IDs and URLs so repeat scans cannot create duplicate opportunities.
 
-When Reddit is enabled, collection uses its authenticated API and scans new post titles and bodies without keyword filtering.
-It does not collect comments or follow linked articles.
-Coverage reports inaccessible communities, missing credentials, pagination limits, and API failures.
 When Stack Exchange is enabled, collection searches new questions on the configured sites with its own query list.
-It collects question titles and bodies, not answers or comments.
-Keep Reddit IDs with their `reddit:t3_` prefix and Stack Exchange IDs with their `stackexchange:<site>:` prefix; Hacker News IDs remain numeric strings.
-The combined screening budget alternates between Hacker News, Reddit, and Stack Exchange items.
+It collects question titles and bodies, not answers or comments, and does not follow linked articles.
+Coverage reports pagination limits, quota backoffs, and API failures.
+Keep Stack Exchange IDs with their `stackexchange:<site>:` prefix; Hacker News IDs remain numeric strings.
+The combined screening budget alternates between Hacker News and Stack Exchange items.

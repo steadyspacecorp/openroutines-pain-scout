@@ -94,7 +94,7 @@ class StackExchangeTests(unittest.TestCase):
                       stackexchange=self.config())
         hn = lambda u: {'hits': [{'objectID': str(i), 'comment_text': 'backup failure'} for i in range(1, 4)], 'nbPages': 1}
         se = lambda u: {'items': [self.question(7, creation_date=9900)], 'has_more': False}
-        result = scout.collect(config, set(), hn, 10000, None, se)
+        result = scout.collect(config, set(), hn, 10000, se)
         self.assertEqual([o['id'] for o in result['observations']], ['1', 'stackexchange:serverfault:7', '2'])
         self.assertEqual(result['coverage']['sources']['stackexchange']['unique_unseen'], 1)
         self.assertEqual(result['coverage']['deferred_by_cap'], 1)

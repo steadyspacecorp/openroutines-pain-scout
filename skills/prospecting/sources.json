@@ -9,17 +9,6 @@
   "lookback_hours": 168,
   "pages_per_query": 2,
   "max_items": 100,
-  "reddit": {
-    "enabled": false,
-    "subreddits": [
-      "selfhosted",
-      "sysadmin",
-      "devops"
-    ],
-    "posts_per_page": 25,
-    "pages_per_subreddit": 2,
-    "user_agent": "script:openroutines-pain-scout:v0.1 (by /u/YOUR_USERNAME)"
-  },
   "stackexchange": {
     "enabled": true,
     "sites": [
