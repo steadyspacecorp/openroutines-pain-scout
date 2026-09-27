@@ -1,0 +1,19 @@
+# The agent's knowledge lives on its own git branch (a worktree at knowledge/),
+# never in main's history.
+knowledge/
+
+# Belt and suspenders: no key material of any kind belongs in this repo.
+# That includes the conventional master.key and deploy.key runtime mounts.
+*.key
+*.pem
+id_*
+*deploy_key*
+
+# Generated opencode agent definitions -- derived from routine frontmatter.
+.opencode/
+
+# Local framework scratch: per-routine lock files and staging.
+.openroutines-tmp/
+
+__pycache__/
+*.pyc

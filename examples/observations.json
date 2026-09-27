@@ -1,0 +1,32 @@
+{
+  "observations": [
+    {
+      "id": "example-missed-backup",
+      "title": "Missing backups",
+      "text": "I run nightly database backups for our app. They stopped last week and I only noticed when I checked the bucket. How do you get alerted when a backup never runs?",
+      "synthetic": true
+    },
+    {
+      "id": "example-manual-check",
+      "title": "Checking imports by hand",
+      "text": "Every morning I open the logs to see if our overnight customer import finished. I want a simple alert if it has not completed by 7am.",
+      "synthetic": true
+    },
+    {
+      "id": "example-wrong-problem",
+      "title": "Website uptime",
+      "text": "I need a service to request our homepage every minute and alert me when the HTTP response is not 200. We do not have background jobs.",
+      "synthetic": true
+    },
+    {
+      "id": "example-promotion",
+      "title": "My new monitoring product",
+      "text": "I launched a cron monitoring tool today. Here is my product announcement and discount code. Please try it!",
+      "synthetic": true
+    }
+  ],
+  "coverage": {
+    "source": "synthetic demonstration",
+    "items": 4
+  }
+}

@@ -1,0 +1,12 @@
+# Never bake these into an image: knowledge belongs to its branch, keys arrive
+# at boot (mounted file or env var), and generated/dev files are local.
+knowledge/
+*.key
+*.pem
+id_*
+*deploy_key*
+.opencode/
+.openroutines-tmp/
+
+__pycache__/
+*.pyc

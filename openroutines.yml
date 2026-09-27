@@ -1,0 +1,26 @@
+name: Pain Scout
+repo: ""
+owner:
+  name: "{{OWNER_NAME}}"
+  email: "{{OWNER_EMAIL}}"
+timezone: "{{TIMEZONE}}"
+instructions: >-
+  Find public conversations describing problems in the prospecting brief.
+  Support findings with source evidence and distinguish unknowns from facts.
+  Deliver findings only to the configured owner destinations; never contact prospects.
+defaults:
+  model: "{{DEFAULT_MODEL}}"
+  timeout: 15m
+max_timeout: 30m
+concurrency: 1
+knowledge:
+  retention: 30d
+variables:
+  jev_model: jev-latest
+  investigate_threshold: "0.8"
+  max_investigations: "5"
+  delivery: preview
+  discussions_repo: ""
+  discussions_category: General
+  digest_to: ""
+  digest_from: ""

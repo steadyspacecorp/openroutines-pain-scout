@@ -1,0 +1,6 @@
+{
+  "firsthand": "Does the observation explicitly describe the author's own concrete problem?",
+  "fit": "Does the described problem match a problem addressed in the product brief?",
+  "excluded": "Does the observation meet an exclusion in the brief?",
+  "seeking": "Is the author explicitly seeking help, an alternative, or a solution?"
+}
