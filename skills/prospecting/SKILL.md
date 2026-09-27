@@ -8,9 +8,10 @@ The owner edits that file, `questions.json`, and `sources.json`; do not silently
 Run from the workspace root; prefix script paths below with `.opencode/skills/prospecting/`.
 The audit ledger path is relative to the workspace root, not the skill directory.
 
-Run `python3 scripts/scout.py collect > /tmp/pain-observations.json`.
-Pass previously screened IDs as `--seen /tmp/seen.json` (a JSON list) to `collect` when available from the scan ledger.
-Then run `python3 scripts/scout.py screen /tmp/pain-observations.json --audit-ledger knowledge/ledgers/scan.md > /tmp/pain-screened.json`.
+Write working files under `scratch/` in the workspace root; create it with `mkdir -p scratch` first. Paths outside the workspace, such as `/tmp`, are not permitted.
+Run `python3 scripts/scout.py collect > scratch/pain-observations.json`.
+Pass previously screened IDs as `--seen scratch/seen.json` (a JSON list) to `collect` when available from the scan ledger.
+Then run `python3 scripts/scout.py screen scratch/pain-observations.json --audit-ledger knowledge/ledgers/scan.md > scratch/pain-screened.json`.
 Collection returns observations plus coverage, including query failures and truncation.
 Screening returns each observation, Jev answers, route, exact routing reasons, usage, errors, and the request context.
 The helper appends an audit table and exact JSON snapshot to the scan ledger, including rejected items.

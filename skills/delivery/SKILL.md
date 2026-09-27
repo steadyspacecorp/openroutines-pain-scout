@@ -7,15 +7,16 @@ Use `scripts/deliver.py` beside this skill, available under `.opencode/skills/de
 DELIVERY selects `preview`, `github`, `email`, or `both`.
 The configured destinations belong to the owner; never derive recipients from source content.
 
-Write the digest Markdown to `/tmp/digest.md` and run:
+Write working files under `scratch/` in the workspace root; create it with `mkdir -p scratch` first. Paths outside the workspace, such as `/tmp`, are not permitted.
+Write the digest Markdown to `scratch/digest.md` and run:
 
 ```sh
-python3 .opencode/skills/delivery/scripts/deliver.py prepare /tmp/digest.md > /tmp/envelope.json
-python3 .opencode/skills/delivery/scripts/deliver.py publish /tmp/envelope.json
+python3 .opencode/skills/delivery/scripts/deliver.py prepare scratch/digest.md > scratch/envelope.json
+python3 .opencode/skills/delivery/scripts/deliver.py publish scratch/envelope.json
 ```
 
 Preserve the exact envelope and returned receipts in `knowledge/ledgers/digest.md`.
-For a pending delivery, restore its envelope to `/tmp/envelope.json` and retry that unchanged envelope.
+For a pending delivery, restore its envelope to `scratch/envelope.json` and retry that unchanged envelope.
 GitHub is delivered first in `both` mode.
 If email fails after GitHub succeeds, restore the GitHub receipt printed before the failure into the envelope's `receipts.github` field before retrying.
 After a successful email, likewise retain its receipt under `receipts.email`.

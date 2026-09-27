@@ -17,3 +17,6 @@ id_*
 
 __pycache__/
 *.pyc
+
+# Routine working files.
+scratch/
