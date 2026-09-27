@@ -2,24 +2,20 @@
 
 Find people describing the problem your product solves.
 
-Pain Scout is an [OpenRoutines](https://openroutines.dev) agent built around [Jev](https://typesafe.ai), TypeSafe's structured decision model. Every six hours it collects conversations from Hacker News and Stack Exchange, and Jev scores each one against your customer brief for a fraction of a cent. The few that pass get a closer look from a general model, and each morning you get a digest of conversations worth joining.
+Pain Scout is an [OpenRoutines](https://openroutines.dev) agent built around [Jev](https://typesafe.ai), TypeSafe's structured decision model. Every six hours it collects conversations from Hacker News and Stack Exchange, and Jev scores each one against your product positioning for a fraction of a cent. The few that pass get a closer look from a general model, and each morning you get a digest of conversations worth joining.
 
 ## Why it matters
 
-Somewhere today, someone is asking for a recommendation, explaining a workaround, or describing the exact problem you built your product to solve. Finding those conversations by hand or by keyword means reading a lot of noise for a little signal.
+Somewhere today, someone is describing the exact problem your product solves. Keyword search can't tell that developer apart from a news story that happens to use the same words. A general model can, but reading every search result with one gets expensive fast.
 
-Keyword search can't tell a developer whose backups silently stopped from a news story about an airport's backup systems. A general model can, but reading every search result with one gets expensive fast. Jev sits in between. It answers four yes-or-no questions about each post and returns a probability for each one. That makes it cheap enough to screen everything a loose search returns, so the scout spends real model time only on what qualifies.
-
-A test run of the included example brief looked like this:
+Jev sits in between. It answers four yes-or-no questions about each post and returns a probability for each one. That makes it cheap enough to screen everything a loose search returns, so the scout spends real model time only on what qualifies. A test run with the included example looked like this:
 
 | Step | Items | Reported cost |
 | --- | --- | --- |
 | Jev screening | 102 posts screened, 1 qualified | about $0.005 |
 | Investigation with Claude Sonnet 5 | 1 post | about $0.19 |
 
-Your costs depend on how much your searches return and which models you choose. Each digest reports the Jev cost it recorded.
-
-An example finding, using the included brief for a scheduled-job monitoring product:
+Each finding in the digest looks like this:
 
 > **A developer discovers a week of missing database backups**
 >
@@ -30,100 +26,83 @@ An example finding, using the included brief for a scheduled-job monitoring prod
 > **Still unknown:** Whether the backup script can send an HTTP request when it completes.
 >
 > **A way in:** Ask how they detect missing backups today, then share a completion-heartbeat example.
->
-> **Source:** \[links directly to the original conversation\]
 
-Each digest includes up to five new findings, a note on what was checked, and whether any sources failed. On quiet days, it tells you nothing qualified. See the [sample digest](examples/digest.md) for the full format.
-
-Every screening decision is inspectable, including the posts that did not qualify. You can read the scores, edit the questions, and try different cutoffs to tune the digest suggestions.
+The scout prepares suggestions for you. It never contacts the people it finds. See the [sample digest](examples/digest.md) for the full format.
 
 ## How it works
 
-The agent runs 4 routines in sequence:
+Four routines run on a schedule:
 
-1. **Scan** (every six hours) searches Hacker News and new questions on your Stack Exchange sites. It looks back seven days and screens up to 100 unseen items across both sources per scan. Jev reads each item alongside your brief and checks for firsthand experience, product fit, exclusions, and requests for help. Qualifying matches are queued for investigation. The scan only runs scripts and updates its records, so it uses a smaller, cheaper model, Claude Haiku 4.5.
-2. **Investigate** (every six hours, after each scan) uses a general model to open each queued conversation, check the context, and prepare the finding. Jev's cheap screening keeps this deeper research focused on promising conversations.
-3. **Digest** (08:00 in your timezone) composes the morning digest from new findings and saves it, so a failed delivery can be retried.
-4. **Deliver** (08:10) sends the saved digest to your configured destinations.
+1. **Scan** (every six hours) collects new posts from your sources, and Jev scores each one against your brief. It runs on Claude Haiku 4.5, since it only runs scripts and keeps records.
+2. **Investigate** (every six hours, after each scan) has a general model open each qualifying conversation, check its context, and write the finding.
+3. **Digest** (08:00 in your timezone) composes the morning digest, including what was scanned and what screening cost.
+4. **Deliver** (08:10) sends the digest to GitHub Discussions, email, or both.
 
-OpenRoutines runs the schedule and carries the scout's knowledge between runs, including what it has already found. You own the brief, routines, credentials, and deployment in one repository.
+Jev answers these questions from [questions.json](skills/prospecting/questions.json) for every post:
 
-### What Jev sees
-
-For each collected post, the script sends Jev, through OpenRouter, your complete customer brief, the post's title and text, its available source metadata, and four questions from [questions.json](skills/prospecting/questions.json):
-
-| Dimension | Question |
+| Question | Asks whether the post... |
 | --- | --- |
-| Firsthand | Does the observation explicitly describe the author's own concrete problem? |
-| Fit | Does the described problem match a problem addressed in the product brief? |
-| Excluded | Does the observation meet an exclusion in the brief? |
-| Seeking | Is the author explicitly seeking help, an alternative, or a solution? |
+| Firsthand | describes the author's own concrete problem |
+| Fit | matches a problem your brief says you solve |
+| Excluded | meets an exclusion in your brief |
+| Seeking | asks for help, an alternative, or a solution |
 
-Each question also instructs Jev to treat the observation as evidence, never as instructions.
-Jev returns a value between 0 and 1 for each question.
-The default selection rule requires firsthand and fit to each reach 0.8, with exclusion below 0.5.
-Seeking is recorded for context and does not determine selection.
-
-At this stage, Jev has not browsed your website or read the full discussion; it judges the supplied brief and collected text.
-The general model checks the original conversation during investigation.
-
-### The brief
-
-Everything hinges on [skills/prospecting/brief.md](skills/prospecting/brief.md). It tells the scout:
-
-- What your product does and who it helps.
-- Which problems and workarounds signal a good fit.
-- What to ignore.
-- What useful help you could offer someone.
-
-The included brief scouts for Tallyping, a fictional scheduled-job monitoring service with a straightforward use case: detecting missed scheduled jobs. Its website and documentation links are placeholders and do not resolve. Try the brief unchanged, then replace it with your own product's positioning. A specific paragraph about your customers is a good start.
-
-### Sources
-
-Choose your sources in [sources.json](skills/prospecting/sources.json):
-
-- **Hacker News:** search posts and comments using phrases your customers use to describe their problems. Keep the phrases loose. Jev does the filtering, so noisy results cost little.
-- **Stack Exchange:** search new questions on the sites you list, such as `serverfault`, `devops`, or `stackoverflow`. Every question is someone describing a problem, so the signal is high, but volume on many sites is now low. The search matches every word of a query in the title or body, so keep its queries short and separate from the Hacker News phrases. Answers and comments are not collected.
-
-The included sites are `serverfault`, `devops`, and `stackoverflow`, a starting point for the scheduled-job monitoring example.
-Replace them with sites where your customers ask questions. Use either source or both. Set `queries` to `[]` to skip Hacker News, or set `enabled` to `false` in the `stackexchange` section to skip Stack Exchange.
-GitHub Discussions is a delivery destination, not a collection source.
-
-Neither source needs a credential.
-Stack Exchange allows 300 requests a day per IP address without a key. The default settings use 9 requests per scan. For more quota, [register an app](https://stackapps.com/apps/oauth/register) and put its key in `stackexchange_key` in `openroutines.yml`. Stack Exchange documents the key as not secret, so it's a variable rather than a credential.
-Stack Exchange content is licensed CC BY-SA, and every finding links to its source.
+A post qualifies when firsthand and fit both reach 0.8 and exclusion stays below 0.5. Seeking is recorded for context only. Every decision, including each rejection, is saved with its scores so you can review it later.
 
 ## Getting started
 
-You need the [OpenRoutines CLI](https://openroutines.dev/docs/getting-started/), Docker, and an [OpenRouter API key](https://openrouter.ai/keys). The one key covers both Jev screening and the general model that runs the routines.
+You need the [OpenRoutines CLI](https://openroutines.dev/docs/getting-started/), Docker, and an [OpenRouter API key](https://openrouter.ai/keys). One key covers Jev and the general models.
 
-### 1. Try Jev without deploying anything
+### 1. Try Jev on sample posts
 
-The repository includes [four sample conversations](examples/observations.json): a missed backup, a manual import check, a website-uptime request, and a promotional post. Run them through the real Jev API from the repository root:
+The repository includes [four sample posts](examples/observations.json) for the example brief: two intended matches and two intended exclusions. Score them from the repository root:
 
 ```sh
-read -rs OPENROUTER_API_KEY
-export OPENROUTER_API_KEY
+read -rs OPENROUTER_API_KEY && export OPENROUTER_API_KEY
 python3 skills/prospecting/scripts/scout.py screen examples/observations.json > /tmp/pain-scores.json
 unset OPENROUTER_API_KEY
 python3 skills/prospecting/scripts/scout.py review /tmp/pain-scores.json
 ```
 
-Paste your OpenRouter key at the hidden prompt and press Enter. This makes four billable API calls, saves the complete results, and prints a table of scores and investigate/drop decisions. It sends no digest. The first two examples are intended matches and the other two are intended exclusions. Actual decisions come from Jev, so disagreement is useful feedback about the brief or the questions.
+Paste your key at the hidden prompt. This makes four billable Jev calls and prints each post's scores and decision.
 
-### 2. Make the agent yours
+### 2. Copy and configure the agent
 
-Copy this template into your own Git repository, then run:
+Create your own repository from this template, clone it, and run:
 
 ```sh
 openroutines configure
 ```
 
-Configuration sets your owner details and timezone, and asks for your OpenRouter key. The general model defaults to Claude Sonnet 5 through OpenRouter. To use a different model, enter any OpenRouter model ID with the `openrouter/` prefix, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). The scan routine sets its own model, Claude Haiku 4.5 through OpenRouter, in [routines/scan.md](routines/scan.md). If you switch providers, change that line too. Jev screening uses the same key through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk). To call TypeSafe directly instead, set `jev_base_url` to `https://api.typesafe.ai` in `openroutines.yml`, store your key with `openroutines credentials set typesafe_api_key`, and grant `typesafe_api_key` in the scan routine. With an OpenRouter model, OpenRoutines injects the OpenRouter key into every run, so the scan routine needs no grant for it. If you choose a model from another provider, grant `openrouter_api_key` in the scan routine so Jev screening can still use it. Set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL, then edit the customer brief, search phrases, and Stack Exchange sites. Keep the generated master key safe. API keys belong in the encrypted credential store.
+This sets your owner details and timezone and stores your OpenRouter key. Then set `repo` in [openroutines.yml](openroutines.yml) to your repository's Git URL.
 
-### 3. Pick where the digest lands
+### 3. Write your brief
 
-**GitHub Discussions** gives you a browsable history of findings. Enable Discussions in your chosen repository (it can be private), then set these entries under `variables` in `openroutines.yml`:
+Your company positioning goes in [skills/prospecting/brief.md](skills/prospecting/brief.md). Jev scores every post against this file, so it matters more than any other setting. It ships describing Tallyping, a fictional scheduled-job monitoring service. Replace each section with your own:
+
+- **Product:** what your product does, in plain terms, with a link to your site and docs.
+- **Ideal customer:** who has the problem, and what's true about their situation.
+- **Problems we address:** the specific problems and workarounds you solve, one per bullet.
+- **Strong signals:** what a good-fit post sounds like, such as a concrete incident or a manual workaround.
+- **Exclusions:** what looks similar but isn't a fit, including problems you don't solve.
+- **Helpful next step:** what useful help you could offer someone, so suggested replies stay helpful rather than salesy.
+
+Specific beats polished. A plain paragraph about who your customers are and what goes wrong for them is a good start.
+
+### 4. Choose where to look
+
+Edit [skills/prospecting/sources.json](skills/prospecting/sources.json):
+
+- **Hacker News `queries`:** phrases your customers use to describe the problem. Keep them loose, since Jev does the filtering.
+- **Stack Exchange `sites` and `queries`:** sites where your customers ask questions, such as `serverfault` or `stackoverflow`, and short search terms. The search matches every word of a query.
+
+Neither source needs a credential.
+
+### 5. Pick where the digest lands
+
+Set `delivery` under `variables` in `openroutines.yml`. Leave it as `preview` until you've seen a digest you like.
+
+For **GitHub Discussions**, turn on Discussions in a repository, which can be private. Then set:
 
 ```yaml
 delivery: github
@@ -131,15 +110,7 @@ discussions_repo: your-org/your-repo
 discussions_category: General
 ```
 
-Choose an existing category, store a GitHub token with Discussions write access to that repository, and grant it to the deliver routine:
-
-```sh
-openroutines credentials set github_token
-```
-
-In [routines/deliver.md](routines/deliver.md), set `credentials: [github_token]`.
-
-**Email** delivers the digest through your Resend account. Verify a sender domain in Resend, then set:
+For **email** through Resend, verify a sender domain, then set:
 
 ```yaml
 delivery: email
@@ -147,19 +118,20 @@ digest_to: you@example.com
 digest_from: Pain Scout <scout@yourdomain.com>
 ```
 
+For **both**, set `delivery: both` and fill in both sets of values. Store the matching credentials and grant them in [routines/deliver.md](routines/deliver.md):
+
 ```sh
+openroutines credentials set github_token    # Discussions write access
 openroutines credentials set resend_api_key
 ```
 
-In `routines/deliver.md`, set `credentials: [resend_api_key]`.
+```yaml
+credentials: [github_token, resend_api_key]  # list only the ones you use
+```
 
-**Both:** set `delivery: both`, configure both destinations, and use `credentials: [github_token, resend_api_key]`. The email includes a link to the Discussion.
+### 6. Run it, then deploy
 
-Leave `delivery: preview` to inspect the digest before enabling sending.
-
-### 4. Run it once, then deploy
-
-To try the full workflow locally, run these in order:
+Run each routine once. These are real runs that use your API keys, and the last one sends to your destinations unless `delivery` is `preview`.
 
 ```sh
 openroutines check
@@ -169,88 +141,53 @@ openroutines routines run digest --write-knowledge
 openroutines routines run deliver --write-knowledge
 ```
 
-These are real runs. They use your API keys, and the final command sends to your configured destinations.
+Then commit, push, and [deploy the container](https://openroutines.dev/docs/deploying/).
 
-Commit your configuration, push your repository, and [deploy the container](https://openroutines.dev/docs/deploying/).
+## Tune the results
 
-## Inspect every screening decision
-
-The scan ledger keeps every screened post, including the ones that did not make the digest.
-Each audit shows the four Jev scores, the original decision, and the exact cutoff that caused a rejection.
-API failures are marked for retry rather than counted as rejected prospects.
-The audit also preserves the brief, questions, post text, model version, and response from that scan.
-
-For example, a borderline post might look like this (illustrative scores):
-
-| Post | Firsthand | Fit | Excluded | Decision | Reason |
-| --- | --- | --- | --- | --- | --- |
-| Checking backups by hand | 0.92 | 0.75 | 0.06 | Drop | Fit is below 0.80 |
-
-Lowering the cutoff to 0.70 would qualify that post without changing its scores.
-If Jev misunderstood the problem instead, edit the brief or fit question and rescore the example.
-The audit stays in the knowledge branch; rejected posts are not published in the daily digest.
-
-After a deployed scan, pull the knowledge branch and open `knowledge/ledgers/scan.md`:
+Every scan saves its scores in the scan ledger on the knowledge branch. Pull it and review the decisions:
 
 ```sh
 openroutines sync
 python3 skills/prospecting/scripts/scout.py review knowledge/ledgers/scan.md
 ```
 
-Try a different cutoff against those saved scores, without another API call:
+Replay a different cutoff against the saved scores, with no new API calls:
 
 ```sh
 python3 skills/prospecting/scripts/scout.py review knowledge/ledgers/scan.md --threshold 0.7
 ```
 
-The comparison shows original and reviewed decisions side by side.
-It does not change tasks, send findings, or overwrite the original audit.
-The reasons describe the routing rule; Jev supplies scores, not a written explanation of its reasoning.
+Then adjust what caused the miss:
 
-To see the exact JSON request for one post, copy its ID from the audit:
+- **Wrong audience or problem:** sharpen the brief, especially its exclusions.
+- **Too strict or too loose:** change `investigate_threshold` in `openroutines.yml`.
+- **Misjudged dimension:** reword that question in `questions.json`. Keep the four keys.
+- **Missing conversations:** broaden the search phrases or add Stack Exchange sites.
+
+Changing the brief or questions affects new scans only. Posts already screened aren't rescored.
+
+<details>
+<summary>Advanced setup</summary>
+
+**Models.** The general model defaults to Claude Sonnet 5 through OpenRouter. You can pick another OpenRouter model during `openroutines configure`, or use another provider as described in the [model setup guide](https://openroutines.dev/docs/extending/#models). The scan routine sets its own model in [routines/scan.md](routines/scan.md), so change that line too if you switch. With a non-OpenRouter default model, grant `openrouter_api_key` in the scan routine so Jev screening can still use it.
+
+**Calling TypeSafe directly.** Jev runs through OpenRouter's [System One API](https://openrouter.ai/docs/guides/community/typesafe-sdk) by default. To use TypeSafe's API instead, set `jev_base_url` to `https://api.typesafe.ai`, store your key with `openroutines credentials set typesafe_api_key`, and grant it in the scan routine.
+
+**Stack Exchange quota.** Stack Exchange allows 300 requests a day per IP address without a key, and the defaults use 9 per scan. For more, [register an app](https://stackapps.com/apps/oauth/register) and set `stackexchange_key` in `openroutines.yml`. The key isn't secret, so it's a variable. Stack Exchange content is licensed CC BY-SA, and every finding links to its source.
+
+**Inspecting one request.** To see the exact JSON sent to Jev for one post, pass its ID from the audit:
 
 ```sh
 python3 skills/prospecting/scripts/scout.py request knowledge/ledgers/scan.md --id stackexchange:serverfault:123456
 ```
 
-Tune three separate inputs:
+**Delivery retries.** GitHub retries look for the saved digest's marker before creating a Discussion. Resend retries reuse the same idempotency key, and an unconfirmed email older than 23 hours needs manual reconciliation. Keep one deployed scout per destination and concurrency at one.
 
-- **Context:** edit [brief.md](skills/prospecting/brief.md) to change the product, audience, and exclusions Jev evaluates against.
-- **Questions:** edit [questions.json](skills/prospecting/questions.json) to change how Jev judges each dimension. Keep the four keys; their wording is editable.
-- **Selection:** adjust `investigate_threshold` in `openroutines.yml`. Firsthand and fit must each meet that cutoff; exclusion must stay below 0.5. Help-seeking is recorded but does not determine selection.
-
-Changing a brief or question requires new Jev calls to get new scores.
-For a small local experiment, save the output of `screen examples/observations.json` to a JSON file, edit the brief or questions, and screen it again to a second file.
-The `review` command accepts those JSON files as well as the scan ledger.
-Previously screened live posts remain deduplicated; changing the brief does not automatically rescore history.
-
-## Tuning
-
-Start with a few searches and a short site list, then read the first results.
-
-- If the scout finds the wrong audience, sharpen the brief's exclusions.
-- If it misses relevant conversations, broaden the search phrases or choose more relevant Stack Exchange sites in `sources.json`.
-- If Stack Exchange searches are truncated, increase `pages_per_query` within your daily quota.
-- Adjust `investigate_threshold` in `openroutines.yml` to change how selective screening is. The default is a starting point to evaluate against your own results.
-
-<details>
-<summary>Development and delivery details</summary>
-
-The Python helpers use the standard library. Run their tests with:
+**Tests.** The Python helpers use only the standard library:
 
 ```sh
 python3 -m unittest discover -s tests -v
 ```
-
-You can preview the [fictional sample digest](examples/digest.md) without credentials:
-
-```sh
-python3 skills/delivery/scripts/deliver.py prepare examples/digest.md > /tmp/pain-preview.json
-python3 skills/delivery/scripts/deliver.py publish /tmp/pain-preview.json
-```
-
-GitHub retries look for the saved digest's marker before creating a Discussion. Resend retries use the same idempotency key. An unconfirmed email older than 23 hours requires manual reconciliation. Keep one deployed scout per destination/category and concurrency at one.
-
-This template has local tests. Live classification quality and end-to-end delivery still need validation with configured accounts.
 
 </details>
